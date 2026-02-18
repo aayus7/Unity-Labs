@@ -1,70 +1,90 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using UnityEngine.EventSystems; // Required to check if clicking UI
 
 public class PlayerController : MonoBehaviour
 {
-    // Movement Variables
     private CharacterController controller;
     private Vector2 moveInput;
-    private Vector3 playerVelocity;
-    public float speed = 5.0f;
-    public float gravityValue = -9.81f;
-    public Vector3 respawnPoint;
-
-    // Camera/Look Variables
-    public GameObject playerCamera; 
-    public float lookSensitivity = 0.1f;
     private Vector2 lookInput;
+    private Vector3 playerVelocity;
     private float xRotation = 0f;
 
-    private void Start()
+    [Header("Settings")]
+    public float speed = 5.0f;
+    public float lookSensitivity = 0.1f;
+    public float gravityValue = -9.81f;
+
+    [Header("References")]
+    public GameObject playerCamera;
+    public Vector3 respawnPoint;
+    public Button respawnButton;
+
+    void Start()
     {
         controller = GetComponent<CharacterController>();
         respawnPoint = transform.position;
 
-        // This locks the cursor to the center of the screen
+        if (respawnButton != null)
+        {
+            respawnButton.onClick.AddListener(Respawn);
+        }
+
         Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     public void OnMove(InputValue value) { moveInput = value.Get<Vector2>(); }
-    
-    // NEW: Function to get mouse movement
     public void OnLook(InputValue value) { lookInput = value.Get<Vector2>(); }
 
     void Update()
     {
-        // 1. MOVEMENT LOGIC
-        if (controller.isGrounded && playerVelocity.y < 0) { playerVelocity.y = 0f; }
+        // 1. ESC to unlock
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
         
-        // Move relative to where the player is facing
-        Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
-        controller.Move(move * Time.deltaTime * speed);
+        // 2. ONLY relock if we click the game world, NOT a UI button
+        if (Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState == CursorLockMode.None)
+        {
+            // This is the fix! It checks if the mouse is NOT over a UI element
+            if (!EventSystem.current.IsPointerOverGameObject())
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
 
+        // 3. Camera Look
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            float mouseX = lookInput.x * lookSensitivity;
+            float mouseY = lookInput.y * lookSensitivity;
+            transform.Rotate(Vector3.up * mouseX);
+            xRotation -= mouseY;
+            xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+            playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        }
+
+        // 4. Movement
+        Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
+        controller.Move(move * speed * Time.deltaTime);
         playerVelocity.y += gravityValue * Time.deltaTime;
         controller.Move(playerVelocity * Time.deltaTime);
+    }
 
-        // 2. LOOK LOGIC (The Lab 3 Fix)
-        float mouseX = lookInput.x * lookSensitivity;
-        float mouseY = lookInput.y * lookSensitivity;
-
-        // Rotate Body Left/Right
-        transform.Rotate(Vector3.up * mouseX);
-
-        // Rotate Camera Up/Down (X-axis)
-        xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f); // Prevents back-flipping
-        playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    public void Respawn()
+    {
+        controller.enabled = false;
+        transform.position = respawnPoint;
+        controller.enabled = true;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.name == "DeathPlane") { Respawn(); }
-    }
-
-    void Respawn()
-    {
-        controller.enabled = false;
-        transform.position = respawnPoint;
-        controller.enabled = true;
     }
 }
