@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
     public GameObject playerCamera;
     public Vector3 respawnPoint;
     public Button respawnButton;
+    public GameObject bulletPrefab;
+public Transform firePoint; // A point at the front of the camera
 
     void Start()
     {
@@ -82,6 +84,14 @@ public class PlayerController : MonoBehaviour
         transform.position = respawnPoint;
         controller.enabled = true;
     }
+
+    public void OnAttack(InputValue value)
+{
+    if (value.isPressed)
+    {
+        Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+    }
+}
 
     private void OnTriggerEnter(Collider other)
     {
