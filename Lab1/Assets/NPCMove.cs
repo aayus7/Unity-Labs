@@ -15,7 +15,6 @@ public class NPCMove : MonoBehaviour
 
     void Update()
     {
-        // If NPC is close to the waypoint, go to the next one
         if (!agent.pathPending && agent.remainingDistance < 0.5f)
         {
             index = (index + 1) % waypoints.Length;
@@ -28,4 +27,27 @@ public class NPCMove : MonoBehaviour
         if (waypoints.Length > 0)
             agent.destination = waypoints[index].position;
     }
-}
+
+    
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if the object entering the sensing circle is the Player
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log("NPC: I sensed the Player!");
+            // Turn Red when player is near
+            GetComponent<Renderer>().material.color = Color.red;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log("NPC: Player left my range.");
+            // Turn back to White when player leaves
+            GetComponent<Renderer>().material.color = Color.white;
+        }
+    }
+} 

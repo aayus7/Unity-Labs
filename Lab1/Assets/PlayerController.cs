@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
     public GameObject playerCamera;
     public Vector3 respawnPoint;
     public Button respawnButton;
+
+    public AudioSource shootSFX; 
     public GameObject bulletPrefab;
 public Transform firePoint; // A point at the front of the camera
 
@@ -85,12 +87,34 @@ public Transform firePoint; // A point at the front of the camera
         controller.enabled = true;
     }
 
-    public void OnAttack(InputValue value)
+    // Use this to handle the actual shooting logic in one place
+void Shoot()
 {
-    if (value.isPressed)
+    if (bulletPrefab != null && firePoint != null)
     {
         Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        
+        if (shootSFX != null) 
+        {
+            shootSFX.Play(); 
+            Debug.Log("Sound is playing!"); // Check the console for this!
+        }
+        else
+        {
+            Debug.LogWarning("ShootSFX is missing in the Inspector!");
+        }
     }
+}
+
+// These are the "listeners" for the Input System
+public void OnAttack(InputValue value)
+{
+    if (value.isPressed) Shoot();
+}
+
+public void OnFire(InputValue value)
+{
+    if (value.isPressed) Shoot();
 }
 
     private void OnTriggerEnter(Collider other)
