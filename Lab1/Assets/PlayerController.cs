@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -5,6 +6,7 @@ using UnityEngine.EventSystems; // Required to check if clicking UI
 
 public class PlayerController : MonoBehaviour
 {
+    public List<Item> inventory = new List<Item>();
     private CharacterController controller;
     private Vector2 moveInput;
     private Vector2 lookInput;
